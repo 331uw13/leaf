@@ -147,7 +147,7 @@ void leaf_draw_rect
         x+w, y-h, r, g, b
     };
 
-    leaf_push_vertices(g_leaf_ctx, vertices, sizeof(vertices));
+    leaf_render_vertices(g_leaf_ctx, vertices, sizeof(vertices));
 }
 
 void leaf_draw_circle
@@ -171,14 +171,11 @@ void leaf_draw_circle
     for(int i = 0; i < num_triangles; ) {
  
         angle = 2.0 * M_PI * i / num_triangles;
-        //float s_x = pos_x + radius * cos(angle);
-        //float s_y = pos_y + radius * sin(angle);
 
         float now_x = 0;
         float now_y = 0;
         float next_x = 0;
         float next_y = 0;
-
         
         angle = 2.0 * M_PI * i / num_triangles;
         leaf_normalize_coords(
@@ -201,7 +198,7 @@ void leaf_draw_circle
             now_x, now_y,       r, g, b,
             next_x, next_y,     r, g, b
         };
-        leaf_push_vertices(g_leaf_ctx, vertices, sizeof(vertices));
+        leaf_render_vertices(g_leaf_ctx, vertices, sizeof(vertices));
     }
 }
 
@@ -242,7 +239,7 @@ void leaf_draw_rect_fade
             x+w, y-h, rB, gB, bB
         };       
     
-        leaf_push_vertices(g_leaf_ctx, vertices, sizeof(vertices));
+        leaf_render_vertices(g_leaf_ctx, vertices, sizeof(vertices));
     }
     else 
     if(fade_dir == LEAF_RECT_FADE_VERTICAL) {
@@ -254,8 +251,8 @@ void leaf_draw_rect_fade
             x,   y-h, rA, gA, bA,
             x+w, y,   rB, gB, bB,
             x+w, y-h, rB, gB, bB
-       };  
-        leaf_push_vertices(g_leaf_ctx, vertices, sizeof(vertices));
+        };
+        leaf_render_vertices(g_leaf_ctx, vertices, sizeof(vertices));
     }
 }
 

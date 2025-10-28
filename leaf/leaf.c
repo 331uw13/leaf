@@ -106,14 +106,14 @@ void leaf_init_renderer(struct leaf_ctx_t* ctx, size_t vbo_memsize) {
 
     glGenBuffers(1, &ctx->renderer_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, ctx->renderer_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vbo_memsize, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vbo_memsize, NULL, GL_STATIC_DRAW);
 
     ctx->renderer_vbo_memsize = vbo_memsize;
 
 
     const size_t stride_size = (2 + 3) * sizeof(float);
     // Positions.
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride_size, 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride_size, (void*)(0));
     glEnableVertexAttribArray(0);
 
     // Colors.
@@ -144,25 +144,7 @@ void leaf_free_renderer(struct leaf_ctx_t* ctx) {
     }
 }
 
-void leaf_render_vertices(struct leaf_ctx_t* ctx) {
-    glBindVertexArray(ctx->renderer_vao);
-    glUseProgram(ctx->renderer_shader);
-
-    glDrawArrays(GL_TRIANGLES, 0, ctx->renderer_num_vertex_positions);
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void leaf_clear_vertices(struct leaf_ctx_t* ctx) {
-    glBindBuffer(GL_ARRAY_BUFFER, ctx->renderer_vbo);
-    glBufferData(GL_ARRAY_BUFFER, ctx->renderer_vbo_memsize, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    ctx->renderer_num_vertex_positions = 0;
-    ctx->renderer_vbo_size = 0;
-}
-
-void leaf_push_vertices(struct leaf_ctx_t* ctx, float* vertices, size_t vertices_sizeb) {
+void leaf_render_vertices(struct leaf_ctx_t* ctx, float* vertices, size_t vertices_sizeb) {
    
     bool divisible = !(vertices_sizeb % 5); // 2(x, y) + 3(r, g, b) = 5
     if(!divisible) {
@@ -171,14 +153,24 @@ void leaf_push_vertices(struct leaf_ctx_t* ctx, float* vertices, size_t vertices
         return;
     }
 
+    if(vertices_sizeb >= ctx->renderer_vbo_memsize) {
+        fprintf(stderr, "(%s) %s(): Renderer VBO doesnt have enough memory allocated.\n",
+                __FILE__, __func__);
+        return;
+    }
 
-    // TODO: Check buffer overflow!
-
-    glBindBuffer(GL_ARRAY_BUFFER, ctx->renderer_vao);
-    glBufferSubData(GL_ARRAY_BUFFER, ctx->renderer_vbo_size, vertices_sizeb, vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->renderer_vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_sizeb, vertices);
     
-    ctx->renderer_vbo_size += vertices_sizeb;
-    ctx->renderer_num_vertex_positions += ((vertices_sizeb / sizeof(float)) / 5) * 2;
+    const int num_vertex_positions = ((vertices_sizeb / sizeof(float)) / 5) * 2;
+   
+    glBindVertexArray(ctx->renderer_vao);
+   
+    glUseProgram(ctx->renderer_shader);
+    glDrawArrays(GL_TRIANGLES, 0, num_vertex_positions);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 

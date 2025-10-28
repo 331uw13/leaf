@@ -1,11 +1,9 @@
-
-
 #include "leaf/leaf.h"
 
 
-
-
 int main(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
 
     struct leaf_ctx_t* leaf_ctx = leaf_open("test window", 800, 600);
     if(!leaf_ctx) {
@@ -13,10 +11,9 @@ int main(int argc, char** argv) {
     }
 
     
-    const size_t renderer_max_vertices = 1024*8;
+    const size_t renderer_max_vertices = 1024 * sizeof(float);
     leaf_init_renderer(leaf_ctx, renderer_max_vertices);
 
-    //const char* font_file = "Topaz-8.ttf";
     const char* font_file = "DejaVuSansCondensed.ttf";
 
 
@@ -63,9 +60,6 @@ int main(int argc, char** argv) {
         leaf_draw_circle(300, 200, 50.0f, 8, (struct color_t){ 50, 255, 200 });
         leaf_draw_circle(380, 330, 43.5f, 32, (struct color_t){ 255, 170, 20 });
 
-        leaf_render_vertices(leaf_ctx);
-
-        leaf_clear_vertices(leaf_ctx);
         glfwSwapBuffers(leaf_ctx->glfw_win);
         glfwWaitEvents();
     }

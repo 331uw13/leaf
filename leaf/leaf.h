@@ -32,11 +32,11 @@ void leaf_normalize_coords(float x_in, float y_in, float* x_out, float* y_out);
 void leaf_init_renderer(struct leaf_ctx_t* ctx, size_t max_num_vertices);
 void leaf_free_renderer(struct leaf_ctx_t* ctx);
 
-void leaf_render_vertices(struct leaf_ctx_t* ctx);
-void leaf_clear_vertices(struct leaf_ctx_t* ctx);
+//void leaf_render_vertices(struct leaf_ctx_t* ctx);
+//void leaf_clear_vertices(struct leaf_ctx_t* ctx);
 
 // One vertex: [x, y, r, g, b]
-void leaf_push_vertices(struct leaf_ctx_t* ctx, float* vertices, size_t num_vertices);
+void leaf_render_vertices(struct leaf_ctx_t* ctx, float* vertices, size_t num_vertices);
 
 
 #endif
