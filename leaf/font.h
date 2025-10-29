@@ -30,7 +30,6 @@ struct font_t {
     int max_bitmap_width;
     int max_bitmap_height;
 
-    // Character cell dimensions (in scale if font_set_scale() is used.)
     int char_width;
     int char_height;
 

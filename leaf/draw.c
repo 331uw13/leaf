@@ -37,7 +37,7 @@ int leaf_draw_char
     float ch_width = glyph->width * font->scale;
     float ch_height = glyph->height * font->scale;
 
-    // Move character to its base line.
+    // Move glyph to its base line.
     // For example 'g', 'j', '*'...  are at differen Y levels.
     float yfix = (font->char_height - glyph->height*font->scale) / 2;
     yfix += ((glyph->height - glyph->bearing_y) * font->scale) / 2;
@@ -130,8 +130,8 @@ void leaf_draw_rect
     float x = (pos_x / (float)g_leaf_ctx->win_width) * 2.0f - 1.0f;
     float y = (pos_y / (float)g_leaf_ctx->win_height) * 2.0f - 1.0f;
 
-    float w = width / (float)g_leaf_ctx->win_width;
-    float h = height / (float)g_leaf_ctx->win_height;
+    float w = width / ((float)g_leaf_ctx->win_width / 2.0f);
+    float h = height / ((float)g_leaf_ctx->win_height / 2.0f);
 
     float r = (float)color.r / 255.0f;
     float g = (float)color.g / 255.0f;
@@ -212,13 +212,12 @@ void leaf_draw_rect_fade
     struct color_t color_B,
     int fade_dir
 ){
-
     pos_y = g_leaf_ctx->win_height - pos_y;
     float x = (pos_x / (float)g_leaf_ctx->win_width) * 2.0f - 1.0f;
     float y = (pos_y / (float)g_leaf_ctx->win_height) * 2.0f - 1.0f;
 
-    float w = width / (float)g_leaf_ctx->win_width;
-    float h = height / (float)g_leaf_ctx->win_height;
+    float w = width / ((float)g_leaf_ctx->win_width / 2.0f);
+    float h = height / ((float)g_leaf_ctx->win_height / 2.0f);
 
     float rA = (float)color_A.r / 255.0f;
     float gA = (float)color_A.g / 255.0f;

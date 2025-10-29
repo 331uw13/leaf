@@ -194,7 +194,7 @@ void leaf_set_font_scale(struct font_t* font, float scale) {
     font->scale = scale;
     font->char_width = font->max_bitmap_width * scale;
     font->char_height = font->max_bitmap_height * scale;
-    
+   
     leaf_set_font_space_width(font, font->real_space_width);
     leaf_set_font_tab_width(font, font->real_tab_width);
 }
@@ -232,7 +232,7 @@ void leaf_measure_text
     }
 
     *width_out = 0;
-    *height_out = font->char_height; // TODO: Take in count '\n'
+    *height_out = font->char_height / 2; // TODO: Take in count '\n'
 
 
     for(ssize_t i = 0; i < text_length; i++) {
@@ -257,7 +257,6 @@ void leaf_measure_text
         *width_out += font->spacing;
     }
 
-    *width_out *= 2;
 }
 
 

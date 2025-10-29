@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
         leaf_draw_text(&font, 40, leaf_ctx->win_height-60, "supports only ASCII characters.", -1);
 
 
-        leaf_draw_rect_fade(100, 200, 200, 200,
+        leaf_draw_rect_fade(50, 200, 100, 100,
                 (struct color_t){ 255, 30, 30 },
                 (struct color_t){ 30, 30, 255 },
                 LEAF_RECT_FADE_HORIZONTAL);
