@@ -4,13 +4,8 @@
 #include <sys/types.h>
 
 #include "font.h"
+#include "color_type.h"
 
-
-struct color_t { // 0 - 255
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
 
 // Returns the drawn character width.
 float leaf_draw_char
@@ -32,6 +27,15 @@ float leaf_draw_text
     ssize_t str_size
 );
 
+float leaf_draw_text_fmt
+(
+    struct font_t* font,
+    int pos_x,
+    int pos_y,
+    const char* fmt,
+    ...
+);
+
 void leaf_draw_rect
 (
     float pos_x,
@@ -39,6 +43,24 @@ void leaf_draw_rect
     float width,
     float height,
     struct color_t color
+);
+
+
+// Options for 'leaf_draw_texture_rect'
+#define LEAF_TEXTURE_NO_OPTIONS 0
+#define LEAF_TEXTURE_FLIP_Y_ORIGIN (1 << 0)
+#define LEAF_TEXTURE_FLIP_X_ORIGIN (1 << 2)
+#define LEAF_TEXTURE_FLIP_VERTICAL (1 << 1)
+#define LEAF_TEXTURE_FLIP_HORIZONTAL (1 << 3)
+void leaf_draw_texture_rect
+(
+    float pos_x,
+    float pos_y,
+    float width,
+    float height,
+    uint32_t texture,
+    struct color_t color,
+    int options
 );
 
 void leaf_draw_circle

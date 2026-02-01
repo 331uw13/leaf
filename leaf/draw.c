@@ -1,12 +1,13 @@
 #include <GL/glew.h>
 #include <string.h>
 #include <math.h>
+#include <stdarg.h>
 
 #include <stdio.h> // temporary.
 
 #include "draw.h"
 #include "leaf.h"
-
+#include "shaders.h"
 
 static struct leaf_ctx_t* g_leaf_ctx = NULL;
 
@@ -25,61 +26,48 @@ float leaf_draw_char
     struct font_t* font,
     int pos_x,
     int pos_y,
-    char ch
+    char chr
 ){
-    if((ch < 0x20) || (ch > 0x7E)) {
-        return 0.0f;
+    if((chr < 0x20) || (chr > 0x7E)) {
+        return 0.0f; // Not ascii character.
     }
 
-    struct glyph_t* glyph = &font->glyphs[ch - 0x20];
+    struct glyph_t* glyph = &font->glyphs[chr - 0x20];
 
-    float ch_width = glyph->width * font->scale;
-    float ch_height = glyph->height * font->scale;
+   // float ch_width = glyph->width * font->scale;
+   // float ch_height = glyph->height * font->scale;
 
-    // Move glyph to its base line.
-    // For example 'g', 'j', '*'...  are at differen Y levels.
-    float yfix = (font->char_height*2 - glyph->height*font->scale) / 2;
-    yfix += ((glyph->height - glyph->bearing_y) * font->scale) / 2;
+    float ch_width = (float)font->max_bitmap_width * font->scale;
+    float ch_height = (float)font->max_bitmap_height * font->scale;
 
+    float cw = ch_width / (float)g_leaf_ctx->win_width;
+    float ch = ch_height / (float)g_leaf_ctx->win_height;
+    
+  
+    pos_y = g_leaf_ctx->win_height - pos_y;
+    float x = (pos_x / (float)g_leaf_ctx->win_width) * 2.0f - 1.0f;
+    float y = (pos_y / (float)g_leaf_ctx->win_height) * 2.0f - 1.0f;
+    
 
-    float xF = (float)pos_x;
-    float yF = (float)g_leaf_ctx->win_height - ((float)pos_y + yfix);
-
-
-    if(font->center_char_to_cell) {
-        xF += (font->char_width*2 - ch_width) / 4.0f;
-    }
-
-
-    yF += 1;
-
-    // Normalize position from:  zero - (win_width/height)  ->  -1.0f - +1.0f
-    float x = (xF / (float)g_leaf_ctx->win_width) * 2.0f - 1.0f;
-    float y = (yF / (float)g_leaf_ctx->win_height) * 2.0f - 1.0f;
-
-    float w = ch_width / (float)g_leaf_ctx->win_width;
-    float h = ch_height / (float)g_leaf_ctx->win_height;
-
-    float vertices[] = {
-        x,   y-h, 0.0f, 1.0f,
-        x,   y,   0.0f, 0.0f,
-        x+w, y,   1.0f, 0.0f,
-
-        x,   y-h, 0.0f, 1.0f,
-        x+w, y,   1.0f, 0.0f,
-        x+w, y-h, 1.0f, 1.0f
+    float glyph_vertices[] = {
+        x,    y-ch, 0.0f, 1.0f, glyph->atlas_x, font->char_color_r, font->char_color_g, font->char_color_b, y, font->italic,  
+        x,    y,    0.0f, 0.0f, glyph->atlas_x, font->char_color_r, font->char_color_g, font->char_color_b, y, font->italic,  
+        x+cw, y,    1.0f, 0.0f, glyph->atlas_x, font->char_color_r, font->char_color_g, font->char_color_b, y, font->italic, 
+        x,    y-ch, 0.0f, 1.0f, glyph->atlas_x, font->char_color_r, font->char_color_g, font->char_color_b, y, font->italic, 
+        x+cw, y,    1.0f, 0.0f, glyph->atlas_x, font->char_color_r, font->char_color_g, font->char_color_b, y, font->italic, 
+        x+cw, y-ch, 1.0f, 1.0f, glyph->atlas_x, font->char_color_r, font->char_color_g, font->char_color_b, y, font->italic
     };
 
-    glBindVertexArray(font->vao);
-
-    glUseProgram(font->shader);
-    glActiveTexture(GL_TEXTURE0);
-
-    glBindTexture(GL_TEXTURE_2D, glyph->texture);
     glBindBuffer(GL_ARRAY_BUFFER, font->vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    glBufferSubData(
+            GL_ARRAY_BUFFER,
+            font->vbo_data_offset,
+            sizeof(glyph_vertices), glyph_vertices);
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    font->vbo_data_offset += sizeof(glyph_vertices);
+    font->vbo_num_vertices += 6;
+    
+    
 
     float ret_width = 0.0f;
     if(!font->center_char_to_cell) {
@@ -131,6 +119,29 @@ float leaf_draw_text
     return total_width;
 }
 
+float leaf_draw_text_fmt
+(
+    struct font_t* font,
+    int pos_x,
+    int pos_y,
+    const char* fmt,
+    ...
+){
+    float retv = 0.0f;
+    va_list args;
+    va_start(args, fmt);
+
+    char buffer[256] = { 0 };
+    ssize_t len = vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
+        
+    if(len > 0) {
+        retv = leaf_draw_text(font, pos_x, pos_y, buffer, len);
+    }
+    va_end(args);
+    return retv;
+}
+
+
 void leaf_draw_rect
 (
     float pos_x,
@@ -161,6 +172,78 @@ void leaf_draw_rect
     };
 
     leaf_render_vertices(g_leaf_ctx, vertices, sizeof(vertices));
+}
+
+void leaf_draw_texture_rect
+(
+    float pos_x,
+    float pos_y,
+    float width,
+    float height,
+    uint32_t texture,
+    struct color_t color,
+    int options
+){
+    if(options & LEAF_TEXTURE_FLIP_Y_ORIGIN) {
+        pos_y = g_leaf_ctx->win_height - pos_y;
+        pos_y -= height;
+    }
+
+    if(options & LEAF_TEXTURE_FLIP_X_ORIGIN) {
+        pos_x = g_leaf_ctx->win_width - pos_x;
+        pos_x -= width;
+    }
+
+    float x = (pos_x / (float)g_leaf_ctx->win_width) * 2.0f - 1.0f;
+    float y = (pos_y / (float)g_leaf_ctx->win_height) * 2.0f - 1.0f;
+
+    float w = width / ((float)g_leaf_ctx->win_width / 2.0f);
+    float h = height / ((float)g_leaf_ctx->win_height / 2.0f);
+
+    float r = (float)color.r / 255.0f;
+    float g = (float)color.g / 255.0f;
+    float b = (float)color.b / 255.0f;
+
+
+    float texc_y_0 = 0.0f;
+    float texc_y_1 = 1.0f;
+
+    float texc_x_0 = 0.0f;
+    float texc_x_1 = 1.0f;
+    
+    if(options & LEAF_TEXTURE_FLIP_VERTICAL) {
+        texc_y_0 = 1.0f;
+        texc_y_1 = 0.0f;
+    }
+
+    if(options & LEAF_TEXTURE_FLIP_HORIZONTAL) {
+        texc_x_0 = 1.0f;
+        texc_x_1 = 0.0f;
+    }
+
+
+    float vertices[] = {
+        x,   y+h, r, g, b,  texc_x_0, texc_y_1,
+        x,   y,   r, g, b,  texc_x_0, texc_y_0,
+        x+w, y,   r, g, b,  texc_x_1, texc_y_0,
+
+        x,   y+h, r, g, b,  texc_x_0, texc_y_1,
+        x+w, y,   r, g, b,  texc_x_1, texc_y_0,
+        x+w, y+h, r, g, b,  texc_x_1, texc_y_1
+    };
+
+    glUseProgram(g_leaf_ctx->renderer_tex_shader); 
+    glBindVertexArray(g_leaf_ctx->renderer_tex_vao);
+    
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindBuffer(GL_ARRAY_BUFFER, g_leaf_ctx->renderer_tex_vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void leaf_draw_circle
